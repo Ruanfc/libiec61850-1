@@ -36,6 +36,8 @@ RTC_DATA_ATTR static int boot_count = 0;
 
 static void obtain_time(void);
 
+void serverTask(void *pvParameters);
+
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM
 void sntp_sync_time(struct timeval *tv)
 {
@@ -59,6 +61,12 @@ void app_main(void)
     struct tm timeinfo;
     time(&now);
     localtime_r(&now, &timeinfo);
+    // Initialize wifi
+    ESP_ERROR_CHECK( nvs_flash_init() );
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+
+    ESP_ERROR_CHECK(example_connect());
     // Is time set? If not, tm_year will be (1970 - 1900).
     if (timeinfo.tm_year < (2016 - 1900)) {
         ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
@@ -90,18 +98,18 @@ void app_main(void)
     char strftime_buf[64];
 
     // Set timezone to Eastern Standard Time and print local time
-    setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
-    tzset();
-    localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in New York is: %s", strftime_buf);
+    // setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
+    // tzset();
+    // localtime_r(&now, &timeinfo);
+    // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    // ESP_LOGI(TAG, "The current date/time in New York is: %s", strftime_buf);
 
-    // Set timezone to China Standard Time
-    setenv("TZ", "CST-8", 1);
-    tzset();
-    localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
+    // // Set timezone to China Standard Time
+    // setenv("TZ", "CST-8", 1);
+    // tzset();
+    // localtime_r(&now, &timeinfo);
+    // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
     
     // Set timezone to China Standard Time
     setenv("TZ", "GMT+3", 1);
@@ -122,6 +130,7 @@ void app_main(void)
         }
     }
 
+
     // const int deep_sleep_sec = 10;
     // ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
     // esp_deep_sleep(1000000LL * deep_sleep_sec);
@@ -129,8 +138,8 @@ void app_main(void)
     ESP_LOGI(TAG, "Waiting for %d seconds", wait_time);
     vTaskDelay(1000 * wait_time / portTICK_PERIOD_MS);
 
-    // server_example_basic_io();
-    xTaskCreate(server_example_basic_io, "server", 4096, (void*)1, 5, NULL);
+    server_example_basic_io();
+    // xTaskCreate(serverTask, "server", 40960, NULL, 5, NULL);
 } // end app_main
 
 static void print_servers(void)
@@ -152,9 +161,9 @@ static void print_servers(void)
 
 static void obtain_time(void)
 {
-    ESP_ERROR_CHECK( nvs_flash_init() );
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK( esp_event_loop_create_default() );
+    // ESP_ERROR_CHECK( nvs_flash_init() );
+    // ESP_ERROR_CHECK(esp_netif_init());
+    // ESP_ERROR_CHECK( esp_event_loop_create_default() );
 
 #if LWIP_DHCP_GET_NTP_SRV
     /**
@@ -187,7 +196,7 @@ static void obtain_time(void)
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
-    ESP_ERROR_CHECK(example_connect());
+    // ESP_ERROR_CHECK(example_connect());
 
 #if LWIP_DHCP_GET_NTP_SRV
     ESP_LOGI(TAG, "Starting SNTP");
@@ -238,4 +247,9 @@ static void obtain_time(void)
 
     // ESP_ERROR_CHECK( example_disconnect() );
     // esp_netif_sntp_deinit();
+}
+
+void serverTask(void *pvParameter)
+{
+    server_example_basic_io();
 }

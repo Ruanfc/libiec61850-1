@@ -259,7 +259,7 @@ TcpServerSocket_create(const char* address, int port)
     ServerSocket serverSocket = NULL;
 
     char addr_str[128];
-    int addr_family = (int)address; //pvParameters;
+    int addr_family = AF_INET;//(int)address; //pvParameters;
     int ip_protocol = 0;
     int keepAlive = 1;
     int keepIdle = KEEPALIVE_IDLE;
@@ -272,7 +272,7 @@ TcpServerSocket_create(const char* address, int port)
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
         dest_addr_ip4->sin_family = AF_INET;
-        dest_addr_ip4->sin_port = htons(PORT);
+        dest_addr_ip4->sin_port = htons(port);
         ip_protocol = IPPROTO_IP;
     }
     #endif
@@ -281,51 +281,60 @@ TcpServerSocket_create(const char* address, int port)
         struct sockaddr_in6 *dest_addr_ip6 = (struct sockaddr_in6 *)&dest_addr;
         bzero(&dest_addr_ip6->sin6_addr.un, sizeof(dest_addr_ip6->sin6_addr.un));
         dest_addr_ip6->sin6_family = AF_INET6;
-        dest_addr_ip6->sin6_port = htons(PORT);
+        dest_addr_ip6->sin6_port = htons(port);
         ip_protocol = IPPROTO_IPV6;
     }
     #endif
 
     int fd;
 
-    if ((fd = socket(addr_family, SOCK_STREAM, ip_protocol)) >= 0)
-    {
-        struct sockaddr_in serverAddress;
-
-        if (!prepareAddress(address, port, &serverAddress)) {
-            ESP_LOGE(TAG, "Unable to resolve 'prepareAddress'");
-            close(fd);
-            return NULL;
-        }
-
-        int optionReuseAddr = 1;
-        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &optionReuseAddr, sizeof(int));
-        #if defined(CONFIG_EXAMPLE_IPV4) && defined(CONFIG_EXAMPLE_IPV6)
-        // Note that by default IPV6 binds to both protocols, it is must be disabled
-         // if both protocols used at the same time (used in CI)
-         setsockopt(listen_sock, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt));
-        #endif
-
-        ESP_LOGI(TAG, "Socket created");
-
-        if (bind(fd, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0) {
-            serverSocket = (ServerSocket) GLOBAL_MALLOC(sizeof(struct sServerSocket));
-            serverSocket->fd = fd;
-            serverSocket->backLog = 2;
-
-            setSocketNonBlocking((Socket) serverSocket);
-        }
-        else {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-            ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
-            close(fd);
-            return NULL ;
-        }
-        ESP_LOGI(TAG, "Socket bound, port %d", PORT);
-    }else //socket()
+    if ((fd = socket(addr_family, SOCK_STREAM, ip_protocol)) <= 0)
     {
        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno); 
+       close(fd);
+       return NULL;
     }
+        struct sockaddr_in serverAddress;
+
+    if (!prepareAddress(address, port, &serverAddress)) {
+        ESP_LOGE(TAG, "Unable to resolve 'prepareAddress'");
+        close(fd);
+        return NULL;
+    }
+
+    int optionReuseAddr = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &optionReuseAddr, sizeof(int));
+    #if defined(CONFIG_EXAMPLE_IPV4) && defined(CONFIG_EXAMPLE_IPV6)
+    // Note that by default IPV6 binds to both protocols, it is must be disabled
+        // if both protocols used at the same time (used in CI)
+        setsockopt(listen_sock, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(opt));
+    #endif
+
+    ESP_LOGI(TAG, "Socket created");
+
+    if (bind(fd, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) >= 0) {
+        serverSocket = (ServerSocket) GLOBAL_MALLOC(sizeof(struct sServerSocket));
+        serverSocket->fd = fd;
+        serverSocket->backLog = 2;
+
+        setSocketNonBlocking((Socket) serverSocket);
+    }
+    else {
+        ESP_LOGE(TAG, "Unable to bind socket: errno %d", errno);
+        ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
+        close(fd);
+        return NULL ;
+    }
+    // int err = bind(fd, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    // if (err != 0)
+    // {
+    //     ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+    //     ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
+    //     // goto CLEAN_UP;
+    //     close(fd);
+    //     return NULL;
+    // }
+    ESP_LOGI(TAG, "Socket bound, port %d", PORT);
 
     return serverSocket;
 }
@@ -334,8 +343,11 @@ void
 ServerSocket_listen(ServerSocket self)
 {
     int err = listen(self->fd, self->backLog);
+    if (err != 0)
+    {
     ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
     close(self->fd);
+    }
 }
 
 

@@ -14,6 +14,7 @@
 #include "lib_memory.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <portmacro.h>
 
 struct sThread {
     ThreadExecutionFunction function;

@@ -101,7 +101,7 @@ rcbEventHandler(void* parameter, ReportControlBlock* rcb, ClientConnection conne
 
 // int
 // main(int argc, char** argv)
-static void server_example_basic_io(void)
+int server_example_basic_io(void)
 {
     // int tcpPort = 102;
     int tcpPort = PORT_SOCKET;
@@ -232,5 +232,5 @@ static void server_example_basic_io(void)
     /* Cleanup - free all resources */
     IedServer_destroy(iedServer);
 
-    // return 0;
+    return 0;
 } /* main() */

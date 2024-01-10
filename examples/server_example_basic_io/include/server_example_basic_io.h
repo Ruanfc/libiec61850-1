@@ -35,7 +35,7 @@ connectionHandler (IedServer self, ClientConnection connection, bool connected, 
 static void
 rcbEventHandler(void* parameter, ReportControlBlock* rcb, ClientConnection connection, IedServer_RCBEventType event, const char* parameterName, MmsDataAccessError serviceError);
 
-static void server_example_basic_io(void);
+int server_example_basic_io(void);
 
 #ifdef __cplusplus
     }
