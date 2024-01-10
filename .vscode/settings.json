@@ -1,0 +1,21 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "cmake.buildDirectory": "${workspaceFolder}/build-esp32",
+  "cmake.configureArgs": [
+    "-DCMAKE_TOOLCHAIN_FILE=/home/ruan_fc/esp/esp-idf/tools/cmake/toolchain-esp32.cmake"
+  ],
+  "cmake.generator": "Unix Makefiles",
+  "files.associations": {
+    "dirent.h": "c",
+    "fcntl.h": "c",
+    "_default_fcntl.h": "c",
+    "signal.h": "c",
+    "server_example_basic_io.h": "c",
+    "ip_addr.h": "c",
+    "esp_netif_sntp.h": "c",
+    "esp_sntp.h": "c",
+    "protocol_examples_common.h": "c"
+  },
+  "idf.adapterTargetName": "esp32",
+  "C_Cpp.errorSquiggles": "enabled"
+}

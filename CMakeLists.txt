@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.16)
 
 # automagically detect if we should cross-compile
 if(DEFINED ENV{TOOLCHAIN})
@@ -9,6 +9,11 @@ endif()
 
 project(libiec61850)
 ENABLE_TESTING()
+
+if($ENV{TOOLCHAIN} MATCHES ".*xtensa-esp.*")
+    set(ESP32 1)
+    set(CMAKE_SYSTEM_NAME "Generic")
+endif()
 
 set(LIB_VERSION_MAJOR "1")
 set(LIB_VERSION_MINOR "5")
@@ -28,7 +33,7 @@ test_big_endian(PLATFORM_IS_BIGENDIAN)
 set(CONFIG_MMS_MAXIMUM_PDU_SIZE "65000" CACHE STRING "Configure the maximum size of an MMS PDU (default 65000)"   )
 set(CONFIG_MAXIMUM_TCP_CLIENT_CONNECTIONS 5 CACHE STRING "Configure the maximum number of clients allowed to connect to the server")
 
-option(BUILD_EXAMPLES "Build the examples" ON)
+option(BUILD_EXAMPLES "Build the examples" OFF)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 
 option(CONFIG_MMS_SINGLE_THREADED "Compile for single threaded version" ON)
@@ -37,7 +42,7 @@ set(CONFIG_MMS_SERVER_MAX_GET_FILE_TASKS 5 CACHE STRING "Configure the maximum n
 set(CONFIG_MMS_MAX_NUMBER_OF_DATA_SET_MEMBERS 100 CACHE STRING "Configure the maximum number of dataSet members")
 
 option(CONFIG_ACTIVATE_TCP_KEEPALIVE "Activate TCP keepalive" ON)
-option(CONFIG_INCLUDE_GOOSE_SUPPORT "Build with GOOSE support" ON)
+option(CONFIG_INCLUDE_GOOSE_SUPPORT "Build with GOOSE support" OFF)
 
 option(CONFIG_USE_EXTERNAL_MBEDTLS_DYNLIB "Build with pre-compiled mbedtls dynamic library" OFF)
 
@@ -144,9 +149,9 @@ endif(WITH_MBEDTLS)
 include(CheckCCompilerFlag)
 
 check_c_compiler_flag("-Wredundant-decls" SUPPORT_REDUNDANT_DECLS)
-if (SUPPORT_REDUNDANT_DECLS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wredundant-decls")
-endif(SUPPORT_REDUNDANT_DECLS)
+# if (SUPPORT_REDUNDANT_DECLS)
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wredundant-decls")
+# endif(SUPPORT_REDUNDANT_DECLS)
 
 # write the detected stuff to this file
 configure_file(
@@ -154,11 +159,64 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/config/stack_config.h
 )
 
+if (ESP32) #build process
+    include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
+    idf_build_component($ENV{IDF_PATH}/examples/common_components/protocol_examples_common)
+    idf_build_component(${CMAKE_CURRENT_LIST_DIR}/kcomp)
+    set(components
+        freertos esptool_py esp_wifi
+        newlib
+        esp_system
+        esp_event
+        log
+        esp_common
+        esp_hw_support
+        nvs_flash
+        protocol_examples_common
+        esp_netif
+        lwip
+        console
+        kcomp
+    )
+    idf_build_process(esp32
+        COMPONENTS ${components}
+        BUILD_DIR ${CMAKE_BINARY_DIR}
+    )
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif(ESP32)
+
 include_directories(
 	${CMAKE_CURRENT_LIST_DIR}/hal/inc
 )
 
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/hal")
+if(!ESP32) #HALL
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/hal")
+else()
+
+    set (libhal_esp32_SRCS
+    ${CMAKE_CURRENT_LIST_DIR}/hal/socket/esp32/socket_bsd.c
+    #${CMAKE_CURRENT_LIST_DIR}/hal/ethernet/esp32/ethernet_linux.c
+    ${CMAKE_CURRENT_LIST_DIR}/hal/thread/linux/thread_linux.c
+    ${CMAKE_CURRENT_LIST_DIR}/hal/filesystem/esp32/file_provider_linux.c
+    ${CMAKE_CURRENT_LIST_DIR}/hal/time/unix/time.c
+    ${CMAKE_CURRENT_LIST_DIR}/hal/serial/esp32/serial_port_linux.c
+    ${CMAKE_CURRENT_LIST_DIR}/hal/memory/lib_memory.c
+    )
+
+    set (libhal_SRCS
+        ${libhal_esp32_SRCS}
+        )
+
+    add_library (hal STATIC ${libhal_SRCS})
+    target_compile_options(hal PRIVATE "-mlongcalls")
+    target_link_libraries(hal
+        idf::lwip
+        idf::esp_netif
+        idf::esp_wifi
+        idf::vfs
+        idf::newlib
+    )
+endif(!ESP32) #HALL
 
 if(DEBUG)
 	set(CMAKE_BUILD_TYPE Debug)
@@ -168,13 +226,246 @@ if(BUILD_EXAMPLES)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/examples)
 endif(BUILD_EXAMPLES)
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
+if(!ESP32) #SRC
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
+else()
+    set (lib_common_SRCS
+    ./src/common/string_map.c
+    ./src/common/map.c
+    ./src/common/linked_list.c
+    ./src/common/byte_buffer.c
+    ./src/common/string_utilities.c
+    ./src/common/buffer_chain.c
+    ./src/common/conversions.c
+    ./src/common/mem_alloc_linked_list.c
+    ./src/common/simple_allocator.c
+    ./src/mms/iso_server/iso_connection.c
+    ./src/mms/iso_server/iso_server.c
+    ./src/mms/iso_acse/acse.c
+    ./src/mms/iso_mms/common/mms_type_spec.c
+    ./src/mms/iso_mms/common/mms_value.c
+    ./src/mms/iso_mms/common/mms_common_msg.c
+    ./src/mms/iso_mms/client/mms_client_initiate.c
+    ./src/mms/iso_mms/client/mms_client_write.c
+    ./src/mms/iso_mms/client/mms_client_identify.c
+    ./src/mms/iso_mms/client/mms_client_status.c
+    ./src/mms/iso_mms/client/mms_client_named_variable_list.c
+    ./src/mms/iso_mms/client/mms_client_connection.c
+    ./src/mms/iso_mms/client/mms_client_files.c
+    ./src/mms/iso_mms/client/mms_client_get_namelist.c
+    ./src/mms/iso_mms/client/mms_client_get_var_access.c
+    ./src/mms/iso_mms/client/mms_client_common.c
+    ./src/mms/iso_mms/client/mms_client_read.c
+    ./src/mms/iso_mms/client/mms_client_journals.c
+    ./src/mms/iso_mms/server/mms_read_service.c
+    ./src/mms/iso_mms/server/mms_file_service.c
+    ./src/mms/iso_mms/server/mms_association_service.c
+    ./src/mms/iso_mms/server/mms_identify_service.c
+    ./src/mms/iso_mms/server/mms_status_service.c
+    ./src/mms/iso_mms/server/mms_named_variable_list_service.c
+    ./src/mms/iso_mms/server/mms_value_cache.c
+    ./src/mms/iso_mms/server/mms_get_namelist_service.c
+    ./src/mms/iso_mms/server/mms_access_result.c
+    ./src/mms/iso_mms/server/mms_server.c
+    ./src/mms/iso_mms/server/mms_server_common.c
+    ./src/mms/iso_mms/server/mms_named_variable_list.c
+    ./src/mms/iso_mms/server/mms_domain.c
+    ./src/mms/iso_mms/server/mms_device.c
+    ./src/mms/iso_mms/server/mms_information_report.c
+    ./src/mms/iso_mms/server/mms_journal.c
+    ./src/mms/iso_mms/server/mms_journal_service.c
+    ./src/mms/iso_mms/server/mms_server_connection.c
+    ./src/mms/iso_mms/server/mms_write_service.c
+    ./src/mms/iso_mms/server/mms_get_var_access_service.c
+    ./src/mms/iso_cotp/cotp.c
+    ./src/mms/iso_presentation/iso_presentation.c
+    ./src/mms/asn1/ber_decode.c
+    ./src/mms/asn1/asn1_ber_primitive_value.c
+    ./src/mms/asn1/ber_encoder.c
+    ./src/mms/asn1/ber_integer.c
+    ./src/mms/iso_client/iso_client_connection.c
+    ./src/mms/iso_common/iso_connection_parameters.c
+    ./src/mms/iso_session/iso_session.c
+    ./src/iec61850/client/client_control.c
+    ./src/iec61850/client/client_report_control.c
+    ./src/iec61850/client/client_goose_control.c
+    ./src/iec61850/client/client_sv_control.c
+    ./src/iec61850/client/client_report.c
+    ./src/iec61850/client/ied_connection.c
+    ./src/iec61850/common/iec61850_common.c
+    ./src/iec61850/server/impl/ied_server.c
+    ./src/iec61850/server/impl/ied_server_config.c
+    ./src/iec61850/server/impl/client_connection.c
+    ./src/iec61850/server/model/model.c
+    ./src/iec61850/server/model/dynamic_model.c
+    ./src/iec61850/server/model/cdc.c
+    ./src/iec61850/server/model/config_file_parser.c
+    ./src/iec61850/server/mms_mapping/control.c
+    ./src/iec61850/server/mms_mapping/mms_mapping.c
+    ./src/iec61850/server/mms_mapping/reporting.c
+    ./src/iec61850/server/mms_mapping/mms_goose.c
+    ./src/iec61850/server/mms_mapping/mms_sv.c
+    ./src/iec61850/server/mms_mapping/logging.c
+    ./src/logging/log_storage.c
+    )
+
+    set (lib_asn1c_SRCS
+    ./src/mms/iso_mms/asn1c/DataAccessError.c
+    ./src/mms/iso_mms/asn1c/DeleteNamedVariableListRequest.c
+    ./src/mms/iso_mms/asn1c/constr_SET_OF.c
+    ./src/mms/iso_mms/asn1c/MmsPdu.c
+    ./src/mms/iso_mms/asn1c/GetNamedVariableListAttributesResponse.c
+    ./src/mms/iso_mms/asn1c/BIT_STRING.c
+    ./src/mms/iso_mms/asn1c/ber_tlv_tag.c
+    ./src/mms/iso_mms/asn1c/constr_SEQUENCE_OF.c
+    ./src/mms/iso_mms/asn1c/asn_SET_OF.c
+    ./src/mms/iso_mms/asn1c/ReadResponse.c
+    ./src/mms/iso_mms/asn1c/InformationReport.c
+    ./src/mms/iso_mms/asn1c/ConfirmedServiceRequest.c
+    ./src/mms/iso_mms/asn1c/DeleteNamedVariableListResponse.c
+    ./src/mms/iso_mms/asn1c/asn_SEQUENCE_OF.c
+    ./src/mms/iso_mms/asn1c/VariableAccessSpecification.c
+    ./src/mms/iso_mms/asn1c/GetVariableAccessAttributesRequest.c
+    ./src/mms/iso_mms/asn1c/xer_support.c
+    ./src/mms/iso_mms/asn1c/ObjectName.c
+    ./src/mms/iso_mms/asn1c/NativeEnumerated.c
+    ./src/mms/iso_mms/asn1c/per_encoder.c
+    ./src/mms/iso_mms/asn1c/constr_SEQUENCE.c
+    ./src/mms/iso_mms/asn1c/GetNameListResponse.c
+    ./src/mms/iso_mms/asn1c/MMSString.c
+    ./src/mms/iso_mms/asn1c/InitiateErrorPdu.c
+    ./src/mms/iso_mms/asn1c/IndexRangeSeq.c
+    ./src/mms/iso_mms/asn1c/ConfirmedErrorPDU.c
+    ./src/mms/iso_mms/asn1c/UnconfirmedService.c
+    ./src/mms/iso_mms/asn1c/UTF8String.c
+    ./src/mms/iso_mms/asn1c/ServiceError.c
+    ./src/mms/iso_mms/asn1c/TimeOfDay.c
+    ./src/mms/iso_mms/asn1c/GetNameListRequest.c
+    ./src/mms/iso_mms/asn1c/asn_codecs_prim.c
+    ./src/mms/iso_mms/asn1c/Data.c
+    ./src/mms/iso_mms/asn1c/ScatteredAccessDescription.c
+    ./src/mms/iso_mms/asn1c/ReadRequest.c
+    ./src/mms/iso_mms/asn1c/per_decoder.c
+    ./src/mms/iso_mms/asn1c/Identifier.c
+    ./src/mms/iso_mms/asn1c/ServiceSupportOptions.c
+    ./src/mms/iso_mms/asn1c/Integer8.c
+    ./src/mms/iso_mms/asn1c/ConfirmedServiceResponse.c
+    ./src/mms/iso_mms/asn1c/ParameterSupportOptions.c
+    ./src/mms/iso_mms/asn1c/Integer16.c
+    ./src/mms/iso_mms/asn1c/ber_tlv_length.c
+    ./src/mms/iso_mms/asn1c/OCTET_STRING.c
+    ./src/mms/iso_mms/asn1c/DefineNamedVariableListRequest.c
+    ./src/mms/iso_mms/asn1c/FloatingPoint.c
+    ./src/mms/iso_mms/asn1c/xer_encoder.c
+    ./src/mms/iso_mms/asn1c/Unsigned8.c
+    ./src/mms/iso_mms/asn1c/BOOLEAN.c
+    ./src/mms/iso_mms/asn1c/INTEGER.c
+    ./src/mms/iso_mms/asn1c/UnconfirmedPDU.c
+    ./src/mms/iso_mms/asn1c/DataSequence.c
+    ./src/mms/iso_mms/asn1c/constraints.c
+    ./src/mms/iso_mms/asn1c/der_encoder.c
+    ./src/mms/iso_mms/asn1c/VisibleString.c
+    ./src/mms/iso_mms/asn1c/InitiateResponsePdu.c
+    ./src/mms/iso_mms/asn1c/StructComponent.c
+    ./src/mms/iso_mms/asn1c/Address.c
+    ./src/mms/iso_mms/asn1c/Unsigned16.c
+    ./src/mms/iso_mms/asn1c/ber_decoder.c
+    ./src/mms/iso_mms/asn1c/per_support.c
+    ./src/mms/iso_mms/asn1c/WriteResponse.c
+    ./src/mms/iso_mms/asn1c/InitRequestDetail.c
+    ./src/mms/iso_mms/asn1c/InitiateRequestPdu.c
+    ./src/mms/iso_mms/asn1c/DefineNamedVariableListResponse.c
+    ./src/mms/iso_mms/asn1c/NULL.c
+    ./src/mms/iso_mms/asn1c/ListOfVariableSeq.c
+    ./src/mms/iso_mms/asn1c/UtcTime.c
+    ./src/mms/iso_mms/asn1c/ConcludeResponsePDU.c
+    ./src/mms/iso_mms/asn1c/AccessResult.c
+    ./src/mms/iso_mms/asn1c/Integer32.c
+    ./src/mms/iso_mms/asn1c/GetNamedVariableListAttributesRequest.c
+    ./src/mms/iso_mms/asn1c/VariableSpecification.c
+    ./src/mms/iso_mms/asn1c/Unsigned32.c
+    ./src/mms/iso_mms/asn1c/constr_CHOICE.c
+    ./src/mms/iso_mms/asn1c/AlternateAccess.c
+    ./src/mms/iso_mms/asn1c/ObjectClass.c
+    ./src/mms/iso_mms/asn1c/InitResponseDetail.c
+    ./src/mms/iso_mms/asn1c/ConfirmedResponsePdu.c
+    ./src/mms/iso_mms/asn1c/GetVariableAccessAttributesResponse.c
+    ./src/mms/iso_mms/asn1c/NativeInteger.c
+    ./src/mms/iso_mms/asn1c/xer_decoder.c
+    ./src/mms/iso_mms/asn1c/AlternateAccessSelection.c
+    ./src/mms/iso_mms/asn1c/ConfirmedRequestPdu.c
+    ./src/mms/iso_mms/asn1c/ConcludeRequestPDU.c
+    ./src/mms/iso_mms/asn1c/WriteRequest.c
+    ./src/mms/iso_mms/asn1c/RejectPDU.c
+    ./src/mms/iso_mms/asn1c/TypeSpecification.c
+    ./src/mms/iso_mms/asn1c/constr_TYPE.c
+    ./src/mms/iso_mms/asn1c/GeneralizedTime.c
+    )
+
+    set (lib_goose_SRCS
+    ./src/goose/goose_subscriber.c
+    ./src/goose/goose_receiver.c
+    ./src/goose/goose_publisher.c
+    )
+
+    set (lib_sv_SRCS
+    ./src/sampled_values/sv_subscriber.c
+    ./src/sampled_values/sv_publisher.c
+    )
+
+    set (library_SRCS
+        ${lib_common_SRCS}
+        ${lib_asn1c_SRCS}
+        ${lib_goose_SRCS}
+        ${lib_sv_SRCS}
+        )
+
+    add_library(iec61850 STATIC ${library_SRCS})
+
+    target_compile_options(iec61850 INTERFACE "-mlongcalls")
+
+    target_link_libraries(iec61850
+        hal
+        idf::lwip
+        idf::newlib
+    )
+endif(!ESP32) #SRC
 
 install(FILES ${API_HEADERS} DESTINATION include/libiec61850 COMPONENT Development)
 
 if(BUILD_PYTHON_BINDINGS)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/pyiec61850)
 endif(BUILD_PYTHON_BINDINGS)
+
+# Generate executable for esp32
+if (ESP32)
+    include_directories(
+        examples/server_example_basic_io/include
+        examples/server_example_basic_io
+    )
+    add_executable(example_main.elf
+        examples/server_example_basic_io/server_example_basic_io.c
+        examples/server_example_basic_io/static_model.c
+        main/example_main.c
+    )
+    target_compile_options(example_main.elf INTERFACE "-mlongcalls")
+    target_link_libraries(example_main.elf
+        iec61850
+        hal
+        idf::newlib
+        idf::esp_system
+        idf::esp_event
+        idf::log
+        idf::esp_common
+        idf::esp_hw_support
+        idf::nvs_flash
+        idf::protocol_examples_common
+        idf::esp_netif
+        idf::lwip
+        idf::esp_phy
+    )
+    idf_build_executable(example_main.elf)
+endif(ESP32)
 
 set(CPACK_PACKAGE_DESCRIPTION "IEC 61850 MMS/GOOSE client and server library")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "IEC 61850 MMS/GOOSE client and server library")
@@ -194,5 +485,3 @@ if(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 
     include(CPack)
 endif(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
-
-

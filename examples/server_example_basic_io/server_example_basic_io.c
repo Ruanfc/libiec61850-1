@@ -6,14 +6,16 @@
  *  - Using the IedServerConfig object to configure stack features
  */
 
-#include "iec61850_server.h"
-#include "hal_thread.h"
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+// #include "iec61850_server.h"
+// #include "hal_thread.h"
+// #include <signal.h>
+// #include <stdlib.h>
+// #include <stdio.h>
+// #include <math.h>
 
+#include "server_example_basic_io.h"
 #include "static_model.h"
+
 
 static int running = 0;
 static IedServer iedServer = NULL;
@@ -97,14 +99,16 @@ rcbEventHandler(void* parameter, ReportControlBlock* rcb, ClientConnection conne
     }
 }
 
-int
-main(int argc, char** argv)
+// int
+// main(int argc, char** argv)
+static void server_example_basic_io(void)
 {
-    int tcpPort = 102;
+    // int tcpPort = 102;
+    int tcpPort = PORT_SOCKET;
 
-    if (argc > 1) {
-        tcpPort = atoi(argv[1]);
-    }
+    // if (argc > 1) {
+    //     tcpPort = atoi(argv[1]);
+    // }
 
     printf("Using libIEC61850 version %s\n", LibIEC61850_getVersionString());
 
@@ -179,7 +183,7 @@ main(int argc, char** argv)
 
     running = 1;
 
-    signal(SIGINT, sigint_handler);
+    // signal(SIGINT, sigint_handler);
 
     float t = 0.f;
 
@@ -228,5 +232,5 @@ main(int argc, char** argv)
     /* Cleanup - free all resources */
     IedServer_destroy(iedServer);
 
-    return 0;
+    // return 0;
 } /* main() */
