@@ -62,7 +62,7 @@ set(CONFIG_IEC61850_SG_RESVTMS 300 CACHE STRING "Configure the maximum number of
 set(CONFIG_REPORTING_DEFAULT_REPORT_BUFFER_SIZE "65536" CACHE STRING "Default buffer size for buffered reports in byte" )
 
 # advanced options
-option(DEBUG "Enable debugging mode (include assertions)" OFF)
+option(DEBUG "Enable debugging mode (include assertions)" ON)
 option(DEBUG_SOCKET "Enable printf debugging for socket layer" ${DEBUG})
 option(DEBUG_COTP "Enable COTP printf debugging" ${DEBUG})
 option(DEBUG_ISO_SERVER "Enable ISO SERVER printf debugging" ${DEBUG})
@@ -177,6 +177,8 @@ if (ESP32) #build process
         lwip
         console
         kcomp
+        esp_gdbstub
+        esp_psram
     )
     idf_build_process(esp32
         COMPONENTS ${components}
@@ -209,6 +211,7 @@ else()
 
     add_library (hal STATIC ${libhal_SRCS})
     target_compile_options(hal PRIVATE "-mlongcalls")
+    target_compile_options(hal PRIVATE "-mfix-esp32-psram-cache-issue")
     target_link_libraries(hal
         idf::lwip
         idf::esp_netif

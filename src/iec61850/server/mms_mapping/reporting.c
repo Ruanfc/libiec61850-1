@@ -2745,6 +2745,7 @@ enqueueReport(ReportControl* reportControl, bool isIntegrity, bool isGI, uint64_
             reportControl->isBuffering, reportControl->buffered, isIntegrity, isGI);
 
     ReportBuffer* buffer = reportControl->reportBuffer;
+    printf("enqueReport: %p\n", buffer);
 
 #if (CONFIG_MMS_THREADLESS_STACK != 1)
     Semaphore_wait(buffer->lock);

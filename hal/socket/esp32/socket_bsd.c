@@ -348,6 +348,7 @@ ServerSocket_listen(ServerSocket self)
     ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
     close(self->fd);
     }
+    else ESP_LOGI(TAG, "Socket %d listening...", self->fd);
 }
 
 

@@ -2,7 +2,7 @@
   "C_Cpp.intelliSenseEngine": "default",
   "cmake.buildDirectory": "${workspaceFolder}/build-esp32",
   "cmake.configureArgs": [
-    "-DCMAKE_TOOLCHAIN_FILE=/home/ruan_fc/esp/esp-idf/tools/cmake/toolchain-esp32.cmake"
+    "--toolchain=/home/ruan_fc/esp/esp-idf/tools/cmake/toolchain-esp32.cmake"
   ],
   "cmake.generator": "Unix Makefiles",
   "files.associations": {
@@ -15,8 +15,24 @@
     "esp_netif_sntp.h": "c",
     "esp_sntp.h": "c",
     "protocol_examples_common.h": "c",
-    "portmacro.h": "c"
+    "portmacro.h": "c",
+    "stack_config.h": "c",
+    "condition_variable": "cpp",
+    "*.tcc": "cpp",
+    "fstream": "cpp",
+    "mutex": "cpp",
+    "ostream": "cpp",
+    "stop_token": "cpp"
   },
   "idf.adapterTargetName": "esp32",
-  "C_Cpp.errorSquiggles": "enabled"
+  "C_Cpp.errorSquiggles": "enabled",
+  "makefile.makefilePath": "/home/Documents/libiec61850/build-esp32/Makefile",
+  "cmake.configureSettings": {},
+  "cmake.ctest.allowParallelJobs": true,
+  "cmake.ctest.parallelJobs": 0,
+  "cmake.useCMakePresets": "auto",
+  "cmake.parallelJobs": 0,
+  "cmake.debugConfig": {},
+  "makefile.configurations": [],
+  "idf.flashType": ""
 }

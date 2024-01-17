@@ -174,6 +174,7 @@ int server_example_basic_io(void)
 
     /* MMS server will be instructed to start listening for client connections. */
     IedServer_start(iedServer, tcpPort);
+    printf("## Ied Server Started!\n");
 
     if (!IedServer_isRunning(iedServer)) {
         printf("Starting server failed (maybe need root permissions or another server is already using the port)! Exit.\n");
@@ -181,6 +182,7 @@ int server_example_basic_io(void)
         exit(-1);
     }
 
+    printf("## Ied Server is running!\n");
     running = 1;
 
     // signal(SIGINT, sigint_handler);
