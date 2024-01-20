@@ -13,6 +13,13 @@ ENABLE_TESTING()
 if($ENV{TOOLCHAIN} MATCHES ".*xtensa-esp.*")
     set(ESP32 1)
     set(CMAKE_SYSTEM_NAME "Generic")
+    # TARGET must be defined else use a default one
+    set(targets "esp32" "esp32s2" "esp32s3" "esp32c3" "esp32c2" "esp32c6" "esp32h2" "esp32p4")
+    IF("${TARGET}" IN_LIST targets)
+    ELSE()
+        message(STATUS "Unknown target ${TARGET}, substutuiting for esp32s3")
+        set(TARGET "esp32s3")
+    ENDIF()
 endif()
 
 set(LIB_VERSION_MAJOR "1")
@@ -180,7 +187,7 @@ if (ESP32) #build process
         esp_gdbstub
         esp_psram
     )
-    idf_build_process(esp32
+    idf_build_process("${TARGET}"
         COMPONENTS ${components}
         BUILD_DIR ${CMAKE_BINARY_DIR}
     )

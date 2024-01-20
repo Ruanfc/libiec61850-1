@@ -84,7 +84,8 @@ rcbEventHandler(void* parameter, ReportControlBlock* rcb, ClientConnection conne
     printf("RCB: %s event: %i\n", ReportControlBlock_getName(rcb), event);
 
     if ((event == RCB_EVENT_SET_PARAMETER) || (event == RCB_EVENT_GET_PARAMETER)) {
-        printf("  param:  %s\n", parameterName);
+        printf("  param:  %s\n", parameterName ? parameterName : (char *)"null");
+        // printf("  param:  %s\n", parameterName);
         printf("  result: %i\n", serviceError);
     }
 

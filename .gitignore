@@ -1,4 +1,4 @@
 build/
 /Debug/
 .github/
-build-esp32/
+build-esp32*/

@@ -2,7 +2,8 @@
   "C_Cpp.intelliSenseEngine": "default",
   "cmake.buildDirectory": "${workspaceFolder}/build-esp32",
   "cmake.configureArgs": [
-    "--toolchain=/home/ruan_fc/esp/esp-idf/tools/cmake/toolchain-esp32.cmake"
+    "--toolchain=/home/ruan_fc/esp/esp-idf/tools/cmake/toolchain-esp32s3.cmake",
+    "-DTARGET=esp32s3"
   ],
   "cmake.generator": "Unix Makefiles",
   "files.associations": {
@@ -22,9 +23,11 @@
     "fstream": "cpp",
     "mutex": "cpp",
     "ostream": "cpp",
-    "stop_token": "cpp"
+    "stop_token": "cpp",
+    "cstdio": "c",
+    "format": "c"
   },
-  "idf.adapterTargetName": "esp32",
+  "idf.adapterTargetName": "esp32s3",
   "C_Cpp.errorSquiggles": "enabled",
   "makefile.makefilePath": "/home/Documents/libiec61850/build-esp32/Makefile",
   "cmake.configureSettings": {},
@@ -34,5 +37,8 @@
   "cmake.parallelJobs": 0,
   "cmake.debugConfig": {},
   "makefile.configurations": [],
-  "idf.flashType": ""
+  "idf.flashType": "",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-bridge.cfg"
+  ]
 }
