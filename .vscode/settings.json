@@ -25,7 +25,8 @@
     "ostream": "cpp",
     "stop_token": "cpp",
     "cstdio": "c",
-    "format": "c"
+    "format": "c",
+    "hal_socket.h": "c"
   },
   "idf.adapterTargetName": "esp32s3",
   "C_Cpp.errorSquiggles": "enabled",

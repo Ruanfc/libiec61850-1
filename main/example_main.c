@@ -116,7 +116,7 @@ void app_main(void)
     tzset();
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in São Paulo is: %s", strftime_buf);
+    ESP_LOGI(TAG, "The current date/time in Recife is: %s", strftime_buf);
 
     if (sntp_get_sync_mode() == SNTP_SYNC_MODE_SMOOTH) {
         struct timeval outdelta;
@@ -134,7 +134,7 @@ void app_main(void)
     // const int deep_sleep_sec = 10;
     // ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
     // esp_deep_sleep(1000000LL * deep_sleep_sec);
-    const int wait_time = 5;
+    const int wait_time = 1;
     ESP_LOGI(TAG, "Waiting for %d seconds", wait_time);
     vTaskDelay(1000 * wait_time / portTICK_PERIOD_MS);
 
