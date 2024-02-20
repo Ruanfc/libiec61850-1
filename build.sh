@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #set -euo pipefail
+# TARGET=esp32
 TARGET=esp32s3
 #TARGET=$1
 #if [[ -n $TARGET ]]

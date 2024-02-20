@@ -45,24 +45,24 @@ controlHandlerForBinaryOutput(ControlAction action, void* parameter, MmsValue* v
 
     uint64_t timeStamp = Hal_getTimeInMs();
 
-    if (parameter == IEDMODEL_GenericIO_GGIO1_SPCSO1) {
-        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO1_t, timeStamp);
-        IedServer_updateAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO1_stVal, value);
+    if (parameter == IEDMODEL_LD0_XCBR1_SPCSO1) {
+        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO1_t, timeStamp);
+        IedServer_updateAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO1_stVal, value);
     }
 
-    if (parameter == IEDMODEL_GenericIO_GGIO1_SPCSO2) {
-        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO2_t, timeStamp);
-        IedServer_updateAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO2_stVal, value);
+    if (parameter == IEDMODEL_LD0_XCBR1_SPCSO2) {
+        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO2_t, timeStamp);
+        IedServer_updateAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO2_stVal, value);
     }
 
-    if (parameter == IEDMODEL_GenericIO_GGIO1_SPCSO3) {
-        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO3_t, timeStamp);
-        IedServer_updateAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO3_stVal, value);
+    if (parameter == IEDMODEL_LD0_XCBR1_SPCSO3) {
+        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO3_t, timeStamp);
+        IedServer_updateAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO3_stVal, value);
     }
 
-    if (parameter == IEDMODEL_GenericIO_GGIO1_SPCSO4) {
-        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO4_t, timeStamp);
-        IedServer_updateAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO4_stVal, value);
+    if (parameter == IEDMODEL_LD0_XCBR1_SPCSO4) {
+        IedServer_updateUTCTimeAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO4_t, timeStamp);
+        IedServer_updateAttributeValue(iedServer, IEDMODEL_LD0_XCBR1_SPCSO4_stVal, value);
     }
 
     return CONTROL_RESULT_OK;
@@ -147,21 +147,21 @@ int server_example_basic_io(void)
     IedServer_setServerIdentity(iedServer, "MZ", "basic io", "1.4.2");
 
     /* Install handler for operate command */
-    IedServer_setControlHandler(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO1,
+    IedServer_setControlHandler(iedServer, IEDMODEL_LD0_XCBR1_SPCSO1,
             (ControlHandler) controlHandlerForBinaryOutput,
-            IEDMODEL_GenericIO_GGIO1_SPCSO1);
+            IEDMODEL_LD0_XCBR1_SPCSO1);
 
-    IedServer_setControlHandler(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO2,
+    IedServer_setControlHandler(iedServer, IEDMODEL_LD0_XCBR1_SPCSO2,
             (ControlHandler) controlHandlerForBinaryOutput,
-            IEDMODEL_GenericIO_GGIO1_SPCSO2);
+            IEDMODEL_LD0_XCBR1_SPCSO2);
 
-    IedServer_setControlHandler(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO3,
+    IedServer_setControlHandler(iedServer, IEDMODEL_LD0_XCBR1_SPCSO3,
             (ControlHandler) controlHandlerForBinaryOutput,
-            IEDMODEL_GenericIO_GGIO1_SPCSO3);
+            IEDMODEL_LD0_XCBR1_SPCSO3);
 
-    IedServer_setControlHandler(iedServer, IEDMODEL_GenericIO_GGIO1_SPCSO4,
+    IedServer_setControlHandler(iedServer, IEDMODEL_LD0_XCBR1_SPCSO4,
             (ControlHandler) controlHandlerForBinaryOutput,
-            IEDMODEL_GenericIO_GGIO1_SPCSO4);
+            IEDMODEL_LD0_XCBR1_SPCSO4);
 
     IedServer_setConnectionIndicationHandler(iedServer, (IedConnectionIndicationHandler) connectionHandler, NULL);
 
@@ -195,10 +195,27 @@ int server_example_basic_io(void)
 
         t += 0.1f;
 
-        float an1 = sinf(t);
-        float an2 = sinf(t + 1.f);
-        float an3 = sinf(t + 2.f);
-        float an4 = sinf(t + 3.f);
+        // float an1 = sinf(t);
+        // float an2 = sinf(t + 1.f);
+        // float an3 = sinf(t + 2.f);
+        // float an4 = sinf(t + 3.f);
+        float an[16];
+        DataAttribute *AnIn_t[16] ={
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn1_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn2_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn3_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn4_t,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn5_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn6_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn7_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn8_t,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn9_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn10_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn11_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn12_t,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn13_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn14_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn15_t, IEDMODEL_LD0_CUS1_GGIO3_AnIn16_t,
+        };
+        DataAttribute *AnIn_mag_f[16] ={
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn1_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn2_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn3_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn4_mag_f,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn5_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn6_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn7_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn8_mag_f,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn9_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn10_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn11_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn12_mag_f,
+            IEDMODEL_LD0_CUS1_GGIO3_AnIn13_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn14_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn15_mag_f, IEDMODEL_LD0_CUS1_GGIO3_AnIn16_mag_f,
+        };
+        for (int i = 0; i<16; i++)
+        {
+            an[i] = sinf(t+(float)i);
+        }
 
         Timestamp iecTimestamp;
 
@@ -212,17 +229,22 @@ int server_example_basic_io(void)
 
         IedServer_lockDataModel(iedServer);
 
-        IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn1_t, &iecTimestamp);
-        IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn1_mag_f, an1);
+        // IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn1_t, &iecTimestamp);
+        // IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn1_mag_f, an1);
 
-        IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn2_t, &iecTimestamp);
-        IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn2_mag_f, an2);
+        // IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn2_t, &iecTimestamp);
+        // IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn2_mag_f, an2);
 
-        IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn3_t, &iecTimestamp);
-        IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn3_mag_f, an3);
+        // IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn3_t, &iecTimestamp);
+        // IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn3_mag_f, an3);
 
-        IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn4_t, &iecTimestamp);
-        IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_GenericIO_GGIO1_AnIn4_mag_f, an4);
+        // IedServer_updateTimestampAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn4_t, &iecTimestamp);
+        // IedServer_updateFloatAttributeValue(iedServer, IEDMODEL_LD0_CUS1_GGIO3_AnIn4_mag_f, an4);
+        for (int i=0; i<16; i++)
+        {
+        IedServer_updateTimestampAttributeValue(iedServer, AnIn_t[i], &iecTimestamp);
+        IedServer_updateFloatAttributeValue(iedServer, AnIn_mag_f[i], an[i]);
+        }
 
         IedServer_unlockDataModel(iedServer);
 

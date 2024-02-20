@@ -218,7 +218,7 @@ else()
 
     add_library (hal STATIC ${libhal_SRCS})
     target_compile_options(hal PRIVATE "-mlongcalls")
-    target_compile_options(hal PRIVATE "-mfix-esp32-psram-cache-issue")
+    #target_compile_options(hal PRIVATE "-mfix-esp32-psram-cache-issue")
     target_link_libraries(hal
         idf::lwip
         idf::esp_netif
